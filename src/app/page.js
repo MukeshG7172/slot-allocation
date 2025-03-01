@@ -41,18 +41,16 @@ export default function SlotsPage() {
   const yearOptions = ['I', 'II', 'III'];
 
   useEffect(() => {
-   
-    if (status === 'unauthenticated') {
-      router.push('/login');
-      return;
-    }
-  
-   
+    // Check admin status only if authenticated
     if (status === 'authenticated' && session?.user?.email) {
       checkAdminStatus(session.user.email);
-      fetchSlots();
+    } else {
+      setIsAdmin(false);
     }
-  }, [status, session, router]);
+    
+    // Always fetch slots regardless of authentication status
+    fetchSlots();
+  }, [status, session]);
 
   const checkAdminStatus = async (email) => {
     try {
@@ -214,12 +212,15 @@ export default function SlotsPage() {
     return format(new Date(dateString), 'MMM d, yyyy h:mm a');
   };
 
-  const handleSignOut = () => {
-    signOut({ callbackUrl: '/login' });
+  const handleAdminLogin = () => {
+    router.push('/login');
   };
 
- 
-  if (status === 'loading') {
+  const handleSignOut = () => {
+    signOut({ callbackUrl: '/' });
+  };
+
+  if (loading && slots.length === 0) {
     return (
       <div className="flex justify-center items-center min-h-screen bg-gray-900 text-white">
         <p>Loading...</p>
@@ -229,17 +230,26 @@ export default function SlotsPage() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100">
-      {/* Header with logo and sign out */}
+      {/* Header with logo and auth buttons */}
       <div className="container mx-auto p-4">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-white">Available Time Slots</h1>
           <div className="flex items-center space-x-4">
-            <button
-              onClick={handleSignOut}
-              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md transition duration-200"
-            >
-              Sign Out
-            </button>
+            {!session ? (
+              <button
+                onClick={handleAdminLogin}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition duration-200"
+              >
+                Admin Panel
+              </button>
+            ) : (
+              <button
+                onClick={handleSignOut}
+                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md transition duration-200"
+              >
+                Sign Out
+              </button>
+            )}
             <div className="h-20 w-60 relative bg-white rounded-lg">
               <Image 
                 src="/citlogo.png" 
@@ -498,7 +508,7 @@ export default function SlotsPage() {
                           : 'bg-gray-600 text-gray-400 cursor-not-allowed'
                       } transition duration-200`}
                     >
-                      View Link
+                      Take Test
                     </button>
                   </div>
                   
