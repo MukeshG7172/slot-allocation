@@ -581,6 +581,7 @@ export default function AllocationPage() {
                 >
                   <option value="1">1st Year</option>
                   <option value="2">2nd Year</option>
+                  <option value="3">3rd Year</option>
                 </select>
               </div>
 
@@ -771,6 +772,13 @@ export default function AllocationPage() {
                     2nd Year:{" "}
                     {studentGroups
                       .filter((g) => g.year === "2")
+                      .reduce((sum, group) => sum + group.count, 0)}{" "}
+                    students
+                  </p>
+                  <p>
+                    3rd Year:{" "}
+                    {studentGroups
+                      .filter((g) => g.year === "3")
                       .reduce((sum, group) => sum + group.count, 0)}{" "}
                     students
                   </p>

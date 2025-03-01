@@ -25,11 +25,9 @@ export async function GET(request, { params }) {
   }
 }
 
-
 export async function PUT(request, { params }) {
   try {
     const data = await request.json();
-    
     
     if (!data.title || !data.startTime || !data.endTime || !data.testLink) {
       return NextResponse.json(
@@ -47,6 +45,9 @@ export async function PUT(request, { params }) {
         startTime: new Date(data.startTime),
         endTime: new Date(data.endTime),
         testLink: data.testLink,
+        linkEnabled: data.linkEnabled || false,
+        departments: data.departments || [],
+        years: data.years || [],
         description: data.description || null,
       },
     });
@@ -59,7 +60,6 @@ export async function PUT(request, { params }) {
     );
   }
 }
-
 
 export async function DELETE(request, { params }) {
   try {

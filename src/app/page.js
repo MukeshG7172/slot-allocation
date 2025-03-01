@@ -3,20 +3,38 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function SlotsPage() {
+  const router = useRouter();
   const [slots, setSlots] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     startTime: '',
     endTime: '',
     testLink: '',
+    linkEnabled: false,
+    departments: [],
+    years: [],
     description: ''
   });
   const [editingSlot, setEditingSlot] = useState(null);
+  const [showForm, setShowForm] = useState(false);
+
+  const departmentOptions = [
+    'Computer Science',
+    'Electrical Engineering',
+    'Mechanical Engineering',
+    'Civil Engineering',
+    'Chemical Engineering',
+    'Physics',
+    'Mathematics',
+    'Biology'
+  ];
+
+  const yearOptions = ['I', 'II', 'III'];
 
   useEffect(() => {
     fetchSlots();
@@ -41,10 +59,27 @@ export default function SlotsPage() {
   };
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
+    const { name, value, type, checked } = e.target;
+    
+    if (type === 'checkbox') {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: checked
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value
+      }));
+    }
+  };
+
+  const handleMultiSelect = (e, field) => {
+    const options = [...e.target.selectedOptions].map(option => option.value);
+    
+    setFormData(prev => ({
       ...prev,
-      [name]: value
+      [field]: options
     }));
   };
 
@@ -52,14 +87,10 @@ export default function SlotsPage() {
     e.preventDefault();
     
     try {
-      const url = editingSlot 
-        ? `/api/slots/${editingSlot}` 
-        : '/api/slots';
-      
-      const method = editingSlot ? 'PUT' : 'POST';
+      const url = `/api/slots/${editingSlot}`;
       
       const response = await fetch(url, {
-        method,
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
         },
@@ -68,7 +99,7 @@ export default function SlotsPage() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to save slot');
+        throw new Error(errorData.error || 'Failed to update slot');
       }
 
       setFormData({
@@ -76,6 +107,9 @@ export default function SlotsPage() {
         startTime: '',
         endTime: '',
         testLink: '',
+        linkEnabled: false,
+        departments: [],
+        years: [],
         description: ''
       });
       setShowForm(false);
@@ -131,6 +165,9 @@ export default function SlotsPage() {
         startTime: formatDateForInput(slotData.startTime),
         endTime: formatDateForInput(slotData.endTime),
         testLink: slotData.testLink,
+        linkEnabled: slotData.linkEnabled || false,
+        departments: slotData.departments || [],
+        years: slotData.years || [],
         description: slotData.description || ''
       });
       
@@ -153,24 +190,34 @@ export default function SlotsPage() {
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Available Time Slots</h1>
-        <button 
-          onClick={() => {
-            if (showForm && editingSlot) {
+        {showForm ? (
+          <button 
+            onClick={() => {
               setFormData({
                 title: '',
                 startTime: '',
                 endTime: '',
                 testLink: '',
+                linkEnabled: false,
+                departments: [],
+                years: [],
                 description: ''
               });
               setEditingSlot(null);
-            }
-            setShowForm(!showForm);
-          }} 
-          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-        >
-          {showForm ? 'Cancel' : 'Add New Slot'}
-        </button>
+              setShowForm(false);
+            }} 
+            className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded"
+          >
+            Cancel
+          </button>
+        ) : (
+          <Link
+            href="/create"
+            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+          >
+            Add New Slot
+          </Link>
+        )}
       </div>
 
       {error && (
@@ -182,7 +229,7 @@ export default function SlotsPage() {
       {showForm && (
         <div className="bg-gray-100 p-4 rounded-lg mb-6">
           <h2 className="text-xl font-semibold mb-4">
-            {editingSlot ? 'Edit Slot' : 'Create New Slot'}
+            Edit Slot
           </h2>
           <form onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -217,6 +264,20 @@ export default function SlotsPage() {
               </div>
 
               <div className="mb-4">
+                <label className="block text-gray-700 mb-2" htmlFor="linkEnabled">
+                  Enable Link
+                </label>
+                <input
+                  type="checkbox"
+                  id="linkEnabled"
+                  name="linkEnabled"
+                  checked={formData.linkEnabled}
+                  onChange={handleChange}
+                  className="h-4 w-4 text-blue-600"
+                />
+              </div>
+
+              <div className="mb-4">
                 <label className="block text-gray-700 mb-2" htmlFor="startTime">
                   Start Time *
                 </label>
@@ -246,6 +307,46 @@ export default function SlotsPage() {
                 />
               </div>
 
+              <div className="mb-4">
+                <label className="block text-gray-700 mb-2" htmlFor="departments">
+                  Departments *
+                </label>
+                <select
+                  id="departments"
+                  name="departments"
+                  multiple
+                  value={formData.departments}
+                  onChange={(e) => handleMultiSelect(e, 'departments')}
+                  required
+                  className="w-full px-3 py-2 border rounded h-32"
+                >
+                  {departmentOptions.map((dept) => (
+                    <option key={dept} value={dept}>{dept}</option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple</p>
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-gray-700 mb-2" htmlFor="years">
+                  Years *
+                </label>
+                <select
+                  id="years"
+                  name="years"
+                  multiple
+                  value={formData.years}
+                  onChange={(e) => handleMultiSelect(e, 'years')}
+                  required
+                  className="w-full px-3 py-2 border rounded h-32"
+                >
+                  {yearOptions.map((year) => (
+                    <option key={year} value={year}>{year}</option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple</p>
+              </div>
+
               <div className="mb-4 md:col-span-2">
                 <label className="block text-gray-700 mb-2" htmlFor="description">
                   Description
@@ -266,7 +367,7 @@ export default function SlotsPage() {
                 type="submit"
                 className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded"
               >
-                {editingSlot ? 'Update Slot' : 'Create Slot'}
+                Update Slot
               </button>
             </div>
           </form>
@@ -297,6 +398,16 @@ export default function SlotsPage() {
                   </p>
                 </div>
                 
+                <div className="mb-3">
+                  <p className="text-sm text-gray-500">Departments:</p>
+                  <p>{slot.departments?.join(', ') || 'None specified'}</p>
+                </div>
+                
+                <div className="mb-3">
+                  <p className="text-sm text-gray-500">Years:</p>
+                  <p>{slot.years?.join(', ') || 'None specified'}</p>
+                </div>
+                
                 {slot.description && (
                   <div className="mb-3">
                     <p className="text-sm text-gray-500">Description:</p>
@@ -306,14 +417,21 @@ export default function SlotsPage() {
                 
                 <div className="mb-3">
                   <p className="text-sm text-gray-500">Test Link:</p>
-                  <a 
-                    href={slot.testLink} 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className="text-blue-600 hover:underline break-words"
+                  <button 
+                    onClick={() => {
+                      if (slot.linkEnabled) {
+                        window.open(slot.testLink, '_blank', 'noopener,noreferrer');
+                      }
+                    }}
+                    disabled={!slot.linkEnabled}
+                    className={`px-3 py-1 rounded text-sm mt-1 ${
+                      slot.linkEnabled 
+                        ? 'bg-blue-500 hover:bg-blue-600 text-white' 
+                        : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                    }`}
                   >
-                    {slot.testLink}
-                  </a>
+                    View Link
+                  </button>
                 </div>
                 
                 <div className="flex justify-end space-x-2 mt-4">
