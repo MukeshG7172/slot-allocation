@@ -20,14 +20,18 @@ export default function CreateSlotPage() {
   });
 
   const departmentOptions = [
-    'Computer Science',
-    'Electrical Engineering',
-    'Mechanical Engineering',
-    'Civil Engineering',
-    'Chemical Engineering',
-    'Physics',
-    'Mathematics',
-    'Biology'
+    'CSE',
+    'AIDS',
+    'IT',
+    'CS',
+    'CSBS',
+    'AIML',
+    'CIVIL',
+    'MECH',
+    'MCT',
+    'ACT',
+    'VLSI',
+    'BME',
   ];
 
   const yearOptions = ['I', 'II', 'III'];
