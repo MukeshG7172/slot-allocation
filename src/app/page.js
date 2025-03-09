@@ -230,7 +230,6 @@ export default function SlotsPage() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100">
-      {/* Header with logo and auth buttons */}
       <div className="container mx-auto p-4">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-white">Available Time Slots</h1>
